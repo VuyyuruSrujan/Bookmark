@@ -49,7 +49,7 @@ export default function Home() {
       if (fetchError) throw fetchError;
       setBookmarks(data || []);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +82,7 @@ export default function Home() {
       setUrl("");
       await loadBookmarks();
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ export default function Home() {
       setError(null);
       await signInWithGoogle();
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
@@ -102,7 +102,7 @@ export default function Home() {
       setError(null);
       await signOut();
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
@@ -130,7 +130,7 @@ export default function Home() {
 
       await loadBookmarks();
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -207,7 +207,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleSignIn}
-                disabled={authLoading || user}
+                disabled={authLoading || !!user}
                 className="rounded-full bg-neon px-6 py-3 text-sm font-semibold text-ink transition hover:translate-y-[-1px] disabled:opacity-50"
               >
                 Start with Google
