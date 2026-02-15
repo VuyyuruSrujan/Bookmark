@@ -21,6 +21,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is already logged in on mount
   useEffect(() => {
+    let isMounted = true;
+
+    const finalizeOAuth = async () => {
+      const isCallbackPath =
+        window.location.pathname.toLowerCase() === "/auth/callback";
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      const hasHashToken = window.location.hash.includes("access_token=");
+
+      if (isCallbackPath || (!code && !hasHashToken)) {
+        return;
+      }
+
+      try {
+        if (code) {
+          const { error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+        } else {
+          const { error: sessionError } =
+            await supabase.auth.getSessionFromUrl({ storeSession: true });
+          if (sessionError) throw sessionError;
+        }
+
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      } catch (err) {
+        if (isMounted) {
+          setError((err as Error).message);
+        }
+      }
+    };
+
     const checkAuth = async () => {
       try {
         const {
@@ -34,7 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    checkAuth();
+    const run = async () => {
+      await finalizeOAuth();
+      await checkAuth();
+    };
+
+    run();
 
     // Subscribe to auth state changes
     const {
@@ -44,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => {
+      isMounted = false;
       subscription?.unsubscribe();
     };
   }, []);
