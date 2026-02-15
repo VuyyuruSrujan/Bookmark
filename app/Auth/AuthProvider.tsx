@@ -40,8 +40,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
         } else {
-          const { error: sessionError } =
-            await supabase.auth.getSessionFromUrl({ storeSession: true });
+          const hashParams = new URLSearchParams(window.location.hash.slice(1));
+          const accessToken = hashParams.get("access_token");
+          const refreshToken = hashParams.get("refresh_token");
+          const hashError = hashParams.get("error_description");
+
+          if (hashError) {
+            throw new Error(hashError);
+          }
+
+          if (!accessToken) {
+            throw new Error("Missing access token from OAuth response.");
+          }
+
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken ?? "",
+          });
+
           if (sessionError) throw sessionError;
         }
 
